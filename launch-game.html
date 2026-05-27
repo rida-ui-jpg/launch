@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Launch — Fantasy Startup League</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --p:#7C3AED;--p2:#9B6EF3;--p3:#6D28D9;
+  --bg:#080810;--bg2:#0E0E1C;--bg3:#13132A;
+  --border:rgba(124,58,237,0.22);--dim:rgba(255,255,255,0.06);
+  --text:#F0EEF8;--muted:#8B87A8;--faint:#4A4770;
+  --green:#22C55E;--red:#F43F5E;--amber:#F59E0B;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden}
+h1,h2,h3,.logo,.num-display{font-family:'Syne',sans-serif}
+
+/* SCREENS */
+.screen{display:none;min-height:100vh;animation:fadeUp 0.5s ease both}
+.screen.active{display:flex;flex-direction:column}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+/* NAV */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 5%;height:68px;
+  border-bottom:1px solid var(--dim);
+  background:rgba(8,8,16,0.9);backdrop-filter:blur(12px);
+  position:sticky;top:0;z-index:50;flex-shrink:0;
+}
+.logo{font-size:18px;font-weight:800;letter-spacing:-0.5px;
+  background:linear-gradient(135deg,#fff,var(--p2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.topbar-right{display:flex;align-items:center;gap:20px}
+.tab-btn{
+  font-size:13px;color:var(--muted);background:none;border:none;
+  cursor:pointer;padding:6px 14px;border-radius:6px;
+  font-family:'DM Sans',sans-serif;transition:all 0.2s;
+}
+.tab-btn.active,.tab-btn:hover{color:var(--text);background:rgba(124,58,237,0.12)}
+.league-chip{
+  font-size:11px;letter-spacing:1px;color:var(--p2);
+  background:rgba(124,58,237,0.1);border:1px solid var(--border);
+  padding:5px 12px;border-radius:6px;font-family:'Syne',sans-serif;font-weight:600;
+}
+
+/* CONTENT */
+.content{flex:1;padding:40px 5%;max-width:1100px;width:100%;margin:0 auto}
+.content.wide{max-width:100%;padding:40px 5%}
+
+/* HOME SCREEN */
+.home-hero{
+  text-align:center;padding:80px 0 60px;
+  position:relative;
+}
+.home-hero::before{
+  content:'';position:absolute;top:-100px;left:50%;transform:translateX(-50%);
+  width:600px;height:400px;
+  background:radial-gradient(ellipse,rgba(124,58,237,0.18) 0%,transparent 70%);
+  pointer-events:none;
+}
+.home-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(124,58,237,0.1);border:1px solid var(--border);
+  padding:6px 16px;border-radius:100px;font-size:12px;
+  color:var(--p2);margin-bottom:28px;
+}
+.blink{width:6px;height:6px;border-radius:50%;background:var(--p2);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
+.home-hero h1{font-size:clamp(40px,6vw,72px);font-weight:800;letter-spacing:-1.5px;margin-bottom:16px;line-height:1}
+.home-hero h1 span{background:linear-gradient(135deg,var(--p2),#C084FC);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.home-hero p{color:var(--muted);font-size:17px;max-width:440px;margin:0 auto 48px;line-height:1.7;font-weight:300}
+
+.home-cards{display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:640px;margin:0 auto}
+.home-card{
+  background:var(--bg2);border:1px solid var(--dim);
+  border-radius:16px;padding:32px 28px;
+  transition:border-color 0.3s,transform 0.3s;cursor:pointer;text-align:left;
+}
+.home-card:hover{border-color:var(--border);transform:translateY(-3px)}
+.home-card-icon{font-size:28px;margin-bottom:16px}
+.home-card h3{font-family:'Syne',sans-serif;font-size:17px;font-weight:700;margin-bottom:8px}
+.home-card p{font-size:13px;color:var(--muted);line-height:1.6}
+
+/* MODAL */
+.modal-bg{
+  position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);
+  z-index:200;display:none;align-items:center;justify-content:center;
+}
+.modal-bg.open{display:flex}
+.modal{
+  background:var(--bg2);border:1px solid var(--border);border-radius:20px;
+  padding:36px;width:100%;max-width:420px;
+  animation:fadeUp 0.3s ease both;
+}
+.modal h2{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;margin-bottom:8px}
+.modal p{font-size:14px;color:var(--muted);margin-bottom:28px;line-height:1.6}
+.field-label{font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;display:block}
+.field-input{
+  width:100%;background:var(--bg3);border:1px solid var(--dim);
+  border-radius:10px;padding:14px 16px;color:var(--text);
+  font-family:'DM Sans',sans-serif;font-size:15px;outline:none;
+  transition:border-color 0.2s;margin-bottom:20px;
+}
+.field-input:focus{border-color:var(--border)}
+.field-input::placeholder{color:var(--faint)}
+.modal-btns{display:flex;gap:12px}
+.btn-primary{
+  flex:1;background:var(--p);color:#fff;border:none;
+  padding:14px 24px;border-radius:10px;font-size:14px;font-weight:500;
+  cursor:pointer;font-family:'DM Sans',sans-serif;
+  transition:background 0.2s,transform 0.15s;
+}
+.btn-primary:hover{background:var(--p2);transform:translateY(-1px)}
+.btn-ghost{
+  background:transparent;color:var(--muted);border:1px solid var(--dim);
+  padding:14px 20px;border-radius:10px;font-size:14px;
+  cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;
+}
+.btn-ghost:hover{color:var(--text);border-color:var(--border)}
+.code-display{
+  background:var(--bg3);border:1px solid var(--border);border-radius:10px;
+  padding:20px;text-align:center;margin-bottom:20px;
+}
+.code-big{font-family:'Syne',sans-serif;font-size:36px;font-weight:800;letter-spacing:6px;color:var(--p2)}
+.code-note{font-size:12px;color:var(--muted);margin-top:8px}
+
+/* DRAFT SCREEN */
+.draft-header{margin-bottom:32px}
+.draft-header h2{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;letter-spacing:-0.5px;margin-bottom:8px}
+.draft-header p{color:var(--muted);font-size:14px}
+.draft-progress{
+  display:flex;align-items:center;gap:16px;
+  margin-bottom:32px;padding:16px 20px;
+  background:var(--bg2);border:1px solid var(--dim);border-radius:12px;
+}
+.draft-slots{display:flex;gap:6px;flex:1}
+.slot{
+  width:28px;height:28px;border-radius:6px;
+  background:var(--bg3);border:1px solid var(--dim);
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;color:var(--faint);transition:all 0.3s;
+  overflow:hidden;
+}
+.slot.filled{background:rgba(124,58,237,0.2);border-color:var(--border)}
+.slot.filled span{font-size:8px;font-weight:700;color:var(--p2)}
+.draft-count{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;white-space:nowrap}
+.draft-count span{color:var(--p2)}
+.draft-lock-btn{
+  background:var(--p);color:#fff;border:none;
+  padding:10px 20px;border-radius:8px;font-size:13px;font-weight:500;
+  cursor:pointer;font-family:'DM Sans',sans-serif;
+  transition:all 0.2s;white-space:nowrap;opacity:0.4;
+}
+.draft-lock-btn.ready{opacity:1}
+.draft-lock-btn.ready:hover{background:var(--p2)}
+
+.filters{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap}
+.filter-btn{
+  font-size:12px;color:var(--muted);background:var(--bg2);
+  border:1px solid var(--dim);border-radius:20px;
+  padding:7px 16px;cursor:pointer;font-family:'DM Sans',sans-serif;
+  transition:all 0.2s;
+}
+.filter-btn.active,.filter-btn:hover{color:var(--p2);border-color:var(--border);background:rgba(124,58,237,0.08)}
+
+.startup-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.startup-card{
+  background:var(--bg2);border:1px solid var(--dim);
+  border-radius:14px;padding:20px;cursor:pointer;
+  transition:all 0.25s;position:relative;overflow:hidden;
+}
+.startup-card:hover{border-color:var(--border);transform:translateY(-2px)}
+.startup-card.selected{border-color:var(--p);background:rgba(124,58,237,0.08)}
+.startup-card.selected::after{
+  content:'✓ DRAFTED';position:absolute;top:12px;right:12px;
+  font-size:9px;font-weight:700;letter-spacing:2px;
+  background:var(--p);color:#fff;padding:4px 10px;border-radius:4px;
+}
+.startup-card.maxed{opacity:0.4;cursor:not-allowed}
+.startup-card.maxed:hover{transform:none;border-color:var(--dim)}
+
+.sc-top{display:flex;align-items:flex-start;gap:14px;margin-bottom:14px}
+.sc-icon{
+  width:44px;height:44px;border-radius:10px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Syne',sans-serif;font-size:13px;font-weight:800;color:#fff;
+}
+.sc-info{flex:1}
+.sc-name{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:4px}
+.sc-desc{font-size:12px;color:var(--muted);line-height:1.6}
+.sc-tags{display:flex;gap:8px;flex-wrap:wrap}
+.sc-tag{
+  font-size:10px;letter-spacing:1px;text-transform:uppercase;
+  padding:4px 10px;border-radius:4px;border:1px solid var(--dim);color:var(--muted);
+}
+.sc-tag.sector{color:var(--p2);border-color:var(--border);background:rgba(124,58,237,0.08)}
+.sc-stage{font-size:11px;color:var(--faint)}
+.sc-potential{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-top:14px;padding-top:14px;border-top:1px solid var(--dim);
+}
+.sc-potential-label{font-size:11px;color:var(--faint)}
+.sc-potential-val{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--p2)}
+
+/* PORTFOLIO SCREEN */
+.port-grid{display:grid;grid-template-columns:1fr 360px;gap:24px;align-items:start}
+.port-total{
+  background:linear-gradient(135deg,rgba(124,58,237,0.15),rgba(124,58,237,0.05));
+  border:1px solid var(--border);border-radius:16px;padding:28px;margin-bottom:24px;
+}
+.port-total-label{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.port-total-score{font-family:'Syne',sans-serif;font-size:56px;font-weight:800;letter-spacing:-2px;line-height:1}
+.port-total-change{font-size:13px;color:var(--green);margin-top:4px}
+.port-rank-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(124,58,237,0.1);border:1px solid var(--border);
+  padding:6px 14px;border-radius:6px;font-size:12px;color:var(--p2);
+  font-family:'Syne',sans-serif;font-weight:600;margin-top:12px;
+}
+
+.port-list{display:flex;flex-direction:column;gap:10px}
+.port-row{
+  background:var(--bg2);border:1px solid var(--dim);
+  border-radius:12px;padding:16px 20px;
+  display:flex;align-items:center;gap:14px;
+  transition:border-color 0.3s;
+}
+.port-row:hover{border-color:var(--border)}
+.port-icon{
+  width:40px;height:40px;border-radius:9px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Syne',sans-serif;font-size:12px;font-weight:800;color:#fff;
+}
+.port-info{flex:1;min-width:0}
+.port-name{font-family:'Syne',sans-serif;font-size:14px;font-weight:700}
+.port-sector{font-size:11px;color:var(--muted);margin-top:2px}
+.port-pts{text-align:right}
+.port-pts-num{font-family:'Syne',sans-serif;font-size:18px;font-weight:800}
+.port-pts-chg{font-size:11px;margin-top:2px}
+.chg-up{color:var(--green)}
+.chg-dn{color:var(--red)}
+
+/* FEED */
+.feed-panel{
+  background:var(--bg2);border:1px solid var(--dim);
+  border-radius:16px;padding:24px;position:sticky;top:88px;
+}
+.feed-title{
+  font-family:'Syne',sans-serif;font-size:14px;font-weight:700;
+  margin-bottom:20px;display:flex;align-items:center;gap:10px;
+}
+.live-pill{
+  font-size:9px;letter-spacing:2px;text-transform:uppercase;
+  background:rgba(34,197,94,0.1);color:var(--green);
+  border:1px solid rgba(34,197,94,0.2);padding:3px 10px;border-radius:4px;
+}
+.feed-list{display:flex;flex-direction:column;gap:0}
+.feed-item{
+  padding:12px 0;border-bottom:1px solid var(--dim);
+  animation:feedIn 0.4s ease both;
+}
+.feed-item:last-child{border-bottom:none}
+@keyframes feedIn{from{opacity:0;transform:translateX(10px)}to{opacity:1;transform:translateX(0)}}
+.feed-co{font-size:13px;font-weight:500;margin-bottom:3px}
+.feed-ev{font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:4px}
+.feed-meta{display:flex;align-items:center;justify-content:space-between}
+.feed-pts-badge{
+  font-family:'Syne',sans-serif;font-size:12px;font-weight:700;
+  padding:2px 10px;border-radius:4px;
+}
+.feed-pts-badge.pos{background:rgba(34,197,94,0.1);color:var(--green)}
+.feed-pts-badge.neg{background:rgba(244,63,94,0.1);color:var(--red)}
+.feed-time{font-size:11px;color:var(--faint)}
+
+/* LEADERBOARD SCREEN */
+.lb-wrap{max-width:800px}
+.lb-league-header{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:16px;padding:24px 28px;margin-bottom:32px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.lb-league-name{font-family:'Syne',sans-serif;font-size:20px;font-weight:800}
+.lb-league-meta{font-size:13px;color:var(--muted);margin-top:4px}
+.lb-season-info{text-align:right}
+.lb-week{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--p2)}
+.lb-week-label{font-size:11px;color:var(--muted);margin-top:2px}
+
+.lb-rows{display:flex;flex-direction:column;gap:10px}
+.lb-row{
+  background:var(--bg2);border:1px solid var(--dim);
+  border-radius:14px;padding:18px 24px;
+  display:flex;align-items:center;gap:16px;
+  transition:all 0.3s;
+}
+.lb-row.you{border-color:var(--p);background:rgba(124,58,237,0.07)}
+.lb-row:hover{border-color:var(--border)}
+.lb-rank-num{
+  font-family:'Syne',sans-serif;font-size:24px;font-weight:800;
+  color:var(--faint);width:36px;text-align:center;flex-shrink:0;
+}
+.lb-row.you .lb-rank-num{color:var(--p2)}
+.lb-rank-num.gold{color:var(--amber)}
+.lb-avatar{
+  width:42px;height:42px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#fff;
+}
+.lb-player-info{flex:1}
+.lb-player-name{font-family:'Syne',sans-serif;font-size:15px;font-weight:700}
+.lb-player-picks{font-size:11px;color:var(--muted);margin-top:3px}
+.lb-right{text-align:right}
+.lb-score-num{font-family:'Syne',sans-serif;font-size:22px;font-weight:800}
+.lb-score-chg{font-size:12px;margin-top:2px}
+.lb-bar-wrap{
+  width:120px;height:4px;background:var(--bg3);
+  border-radius:2px;overflow:hidden;margin-top:8px;
+}
+.lb-bar{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--p),var(--p2));transition:width 1s ease}
+
+/* EMPTY STATE */
+.empty-state{
+  text-align:center;padding:80px 20px;
+  color:var(--muted);
+}
+.empty-icon{font-size:48px;margin-bottom:16px;opacity:0.4}
+.empty-state h3{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:var(--text);margin-bottom:8px}
+.empty-state p{font-size:14px;line-height:1.7}
+
+/* UTILS */
+.mt-8{margin-top:8px}.mt-16{margin-top:16px}.mt-24{margin-top:24px}
+.gap-row{display:flex;align-items:center;gap:12px}
+.text-muted{color:var(--muted)}
+.text-sm{font-size:13px}
+
+@media(max-width:768px){
+  .home-cards{grid-template-columns:1fr}
+  .port-grid{grid-template-columns:1fr}
+  .feed-panel{position:static}
+  .startup-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- HOME SCREEN -->
+<div class="screen active" id="screen-home">
+  <div class="content" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh">
+    <div class="home-hero">
+      <div class="home-badge"><span class="blink"></span>Season 01 — Now Open</div>
+      <h1>The Fantasy League<br>for <span>Startups.</span></h1>
+      <p>Draft 10 real early-stage companies. Earn points when they raise, launch, and grow. Compete against friends.</p>
+      <div class="home-cards">
+        <div class="home-card" onclick="openModal('create')">
+          <div class="home-card-icon">🏆</div>
+          <h3>Create a League</h3>
+          <p>Start a new league and invite friends with a shareable code.</p>
+        </div>
+        <div class="home-card" onclick="openModal('join')">
+          <div class="home-card-icon">🎯</div>
+          <h3>Join a League</h3>
+          <p>Enter a league code from a friend and join their season.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- GAME SCREENS (shown after joining) -->
+<div class="screen" id="screen-game">
+  <div class="topbar">
+    <div class="logo">Launch</div>
+    <div class="topbar-right">
+      <button class="tab-btn active" onclick="switchTab('draft')" id="tab-draft">Draft</button>
+      <button class="tab-btn" onclick="switchTab('portfolio')" id="tab-portfolio">Portfolio</button>
+      <button class="tab-btn" onclick="switchTab('leaderboard')" id="tab-leaderboard">Leaderboard</button>
+      <div class="league-chip" id="league-chip">—</div>
+    </div>
+  </div>
+
+  <!-- DRAFT TAB -->
+  <div id="tab-draft-content" class="content wide" style="padding-top:32px">
+    <div class="draft-header">
+      <h2>Draft Board</h2>
+      <p class="text-muted text-sm">Pick 10 startups for your portfolio. Choose wisely — you can't swap once locked.</p>
+    </div>
+    <div class="draft-progress">
+      <div class="draft-slots" id="draft-slots"></div>
+      <div class="draft-count">Picks: <span id="pick-count">0</span>/10</div>
+      <button class="draft-lock-btn" id="lock-btn" onclick="lockDraft()">Lock My Draft →</button>
+    </div>
+    <div class="filters">
+      <button class="filter-btn active" onclick="filterStartups('All',this)">All</button>
+      <button class="filter-btn" onclick="filterStartups('AI',this)">AI</button>
+      <button class="filter-btn" onclick="filterStartups('Fintech',this)">Fintech</button>
+      <button class="filter-btn" onclick="filterStartups('Health',this)">Health</button>
+      <button class="filter-btn" onclick="filterStartups('Climate',this)">Climate</button>
+      <button class="filter-btn" onclick="filterStartups('Consumer',this)">Consumer</button>
+      <button class="filter-btn" onclick="filterStartups('B2B SaaS',this)">B2B SaaS</button>
+    </div>
+    <div class="startup-grid" id="startup-grid"></div>
+  </div>
+
+  <!-- PORTFOLIO TAB -->
+  <div id="tab-portfolio-content" class="content" style="display:none;padding-top:32px">
+    <div id="portfolio-empty" class="empty-state">
+      <div class="empty-icon">📋</div>
+      <h3>No picks yet</h3>
+      <p>Head to the Draft tab and pick your 10 startups to start building your portfolio.</p>
+    </div>
+    <div id="portfolio-filled" style="display:none">
+      <div class="port-grid">
+        <div>
+          <div class="port-total">
+            <div class="port-total-label">Total Score</div>
+            <div class="port-total-score" id="total-score">0</div>
+            <div class="port-total-change" id="total-change">+0 this week</div>
+            <div class="port-rank-badge">🏅 Rank <span id="your-rank">#—</span> in your league</div>
+          </div>
+          <div class="port-list" id="port-list"></div>
+        </div>
+        <div class="feed-panel">
+          <div class="feed-title">
+            Activity Feed
+            <span class="live-pill">● LIVE</span>
+          </div>
+          <div class="feed-list" id="feed-list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LEADERBOARD TAB -->
+  <div id="tab-leaderboard-content" class="content" style="display:none;padding-top:32px">
+    <div class="lb-wrap">
+      <div class="lb-league-header">
+        <div>
+          <div class="lb-league-name" id="lb-league-name">—</div>
+          <div class="lb-league-meta" id="lb-league-meta">—</div>
+        </div>
+        <div class="lb-season-info">
+          <div class="lb-week">Wk 4</div>
+          <div class="lb-week-label">of 12</div>
+        </div>
+      </div>
+      <div class="lb-rows" id="lb-rows"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-bg" id="modal-create">
+  <div class="modal" id="modal-create-inner">
+    <h2>Create a League</h2>
+    <p>Name your league and invite friends with the code.</p>
+    <label class="field-label">Your name</label>
+    <input class="field-input" id="create-name" placeholder="e.g. Jordan" maxlength="20">
+    <label class="field-label">League name</label>
+    <input class="field-input" id="create-league" placeholder="e.g. Stern MBA League" maxlength="30">
+    <div class="modal-btns">
+      <button class="btn-ghost" onclick="closeModals()">Cancel</button>
+      <button class="btn-primary" onclick="createLeague()">Create League</button>
+    </div>
+  </div>
+  <div class="modal" id="modal-code-reveal" style="display:none">
+    <h2>League Created! 🎉</h2>
+    <p>Share this code with friends so they can join your league.</p>
+    <div class="code-display">
+      <div class="code-big" id="league-code-display">—</div>
+      <div class="code-note">Share this with your friends</div>
+    </div>
+    <button class="btn-primary" style="width:100%" onclick="enterGame()">Start Drafting →</button>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-join">
+  <div class="modal">
+    <h2>Join a League</h2>
+    <p>Enter your name and the league code from your friend.</p>
+    <label class="field-label">Your name</label>
+    <input class="field-input" id="join-name" placeholder="e.g. Jordan" maxlength="20">
+    <label class="field-label">League code</label>
+    <input class="field-input" id="join-code" placeholder="e.g. LAUNCH-4829" maxlength="12" style="text-transform:uppercase">
+    <div class="modal-btns">
+      <button class="btn-ghost" onclick="closeModals()">Cancel</button>
+      <button class="btn-primary" onclick="joinLeague()">Join League</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── DATA ───────────────────────────────────────────────
+const STARTUPS = [
+  {id:1,name:'Novela AI',abbr:'NA',color:'#7C3AED',sector:'AI',stage:'Series A',desc:'Foundation models for enterprise knowledge management. Raised $12M led by a16z.',potential:'Very High'},
+  {id:2,name:'Flowlith',abbr:'FL',color:'#0EA5E9',sector:'Fintech',stage:'Seed',desc:'Embedded finance APIs for SMBs. Launched on iOS with 8K active users.',potential:'High'},
+  {id:3,name:'Arbor',abbr:'AR',color:'#16A34A',sector:'Climate',stage:'Pre-seed',desc:'Carbon credit marketplace for real estate developers. Backed by Breakthrough Energy.',potential:'Medium'},
+  {id:4,name:'Maxxed',abbr:'MX',color:'#F59E0B',sector:'Health',stage:'Seed',desc:'AI-powered recovery tracking for athletes. 50K registered users, growing 40% MoM.',potential:'High'},
+  {id:5,name:'Draftboard',abbr:'DB',color:'#EC4899',sector:'B2B SaaS',stage:'Pre-seed',desc:'Hiring workflow automation for early-stage startups. Just closed $3.2M seed.',potential:'Medium'},
+  {id:6,name:'Vanta AI',abbr:'VA',color:'#8B5CF6',sector:'AI',stage:'Series B',desc:'Security compliance automation with AI audit trails. 2,000+ enterprise customers.',potential:'Very High'},
+  {id:7,name:'Loops',abbr:'LP',color:'#06B6D4',sector:'Consumer',stage:'Seed',desc:'Email marketing built for SaaS products. Growing via product-led acquisition.',potential:'High'},
+  {id:8,name:'Meridian',abbr:'ME',color:'#F43F5E',sector:'Fintech',stage:'Series A',desc:'Cross-border payroll infrastructure for remote-first companies. Operating in 40 countries.',potential:'Very High'},
+  {id:9,name:'Groundwork',abbr:'GW',color:'#84CC16',sector:'Climate',stage:'Seed',desc:'Soil health monitoring platform for regenerative agriculture. Strong grant pipeline.',potential:'Medium'},
+  {id:10,name:'Relay Health',abbr:'RH',color:'#14B8A6',sector:'Health',stage:'Pre-seed',desc:'Async care coordination between patients and specialist networks.',potential:'Medium'},
+  {id:11,name:'Stackr',abbr:'SK',color:'#F97316',sector:'B2B SaaS',stage:'Seed',desc:'Internal developer portals — like Backstage but easier to set up. 300+ paying teams.',potential:'High'},
+  {id:12,name:'Pulse',abbr:'PL',color:'#A855F7',sector:'Consumer',stage:'Series A',desc:'Social fitness app where workouts happen live with strangers. Viral on TikTok.',potential:'High'},
+  {id:13,name:'Cipher Labs',abbr:'CL',color:'#6366F1',sector:'AI',stage:'Seed',desc:'Privacy-preserving ML infrastructure. Strong academic team from MIT and Stanford.',potential:'Very High'},
+  {id:14,name:'Canopy',abbr:'CN',color:'#22C55E',sector:'Climate',stage:'Pre-seed',desc:'Forest monitoring via satellite imagery and ML. Partnered with three governments.',potential:'Medium'},
+  {id:15,name:'Depot',abbr:'DP',color:'#EAB308',sector:'B2B SaaS',stage:'Series A',desc:'Build caching and CI acceleration for engineering teams. 40% faster builds on average.',potential:'High'},
+  {id:16,name:'Nova Credit',abbr:'NC',color:'#3B82F6',sector:'Fintech',stage:'Series B',desc:'Credit scoring for immigrants using international credit history. Partnered with top banks.',potential:'Very High'},
+  {id:17,name:'Hatch',abbr:'HT',color:'#F43F5E',sector:'Consumer',stage:'Seed',desc:'Social savings app for friend groups. Traction with college students, 120K signups.',potential:'High'},
+  {id:18,name:'Osmosis',abbr:'OS',color:'#10B981',sector:'Health',stage:'Series A',desc:'Personalized medical education platform. Used by 60% of US medical schools.',potential:'Very High'},
+  {id:19,name:'Forge',abbr:'FG',color:'#F97316',sector:'AI',stage:'Pre-seed',desc:'AI copilot for hardware engineers. Reduces PCB design iteration cycles by 70%.',potential:'Medium'},
+  {id:20,name:'Waymark',abbr:'WM',color:'#8B5CF6',sector:'B2B SaaS',stage:'Seed',desc:'Automated compliance documentation for healthcare orgs. Sticky enterprise product.',potential:'High'},
+];
+
+const FAKE_PLAYERS = [
+  {name:'sarah_vc',avatar:'SV',color:'#7C3AED',base:1640},
+  {name:'mikecapital',avatar:'MC',color:'#0EA5E9',base:1180},
+  {name:'fintechfan',avatar:'FF',color:'#F59E0B',base:980},
+  {name:'draftking99',avatar:'DK',color:'#F43F5E',base:720},
+  {name:'venturevibes',avatar:'VV',color:'#22C55E',base:540},
+];
+
+const MILESTONES = [
+  {co:'Novela AI',event:'Closes $12M Series A led by a16z',pts:200},
+  {co:'Maxxed',event:'Hits 50,000 registered users',pts:80},
+  {co:'Flowlith',event:'Launches iOS app on App Store',pts:60},
+  {co:'Draftboard',event:'Closes $3.2M Seed round',pts:100},
+  {co:'Vanta AI',event:'Announces 2,000 enterprise customers',pts:120},
+  {co:'Pulse',event:'Goes viral on TikTok — 2M views',pts:60},
+  {co:'Nova Credit',event:'Partners with JPMorgan Chase',pts:150},
+  {co:'Arbor',event:'Misses Q2 user growth target',pts:-20},
+  {co:'Cipher Labs',event:'Published research at NeurIPS',pts:80},
+  {co:'Osmosis',event:'Expands to 60% of US med schools',pts:120},
+  {co:'Hatch',event:'Crosses 120K signups',pts:80},
+  {co:'Depot',event:'Raises $8M Series A',pts:200},
+  {co:'Meridian',event:'Expands to 40 countries',pts:100},
+  {co:'Loops',event:'Featured in Product Hunt #1',pts:60},
+  {co:'Relay Health',event:'Awarded $500K NIH grant',pts:80},
+  {co:'Stackr',event:'Hits 300 paying teams',pts:60},
+  {co:'Canopy',event:'Signs government partnership',pts:80},
+  {co:'Groundwork',event:'Secures $2M in grants',pts:60},
+  {co:'Forge',event:'Closes pre-seed from YC',pts:100},
+  {co:'Waymark',event:'Signs first Fortune 500 client',pts:120},
+];
+
+// ─── STATE ───────────────────────────────────────────────
+let state = {
+  playerName: '',
+  leagueCode: '',
+  leagueName: '',
+  picks: [],
+  locked: false,
+  scores: {},
+  feed: [],
+  fakeScores: {},
+  currentFilter: 'All',
+};
+
+// ─── MODAL LOGIC ─────────────────────────────────────────
+function openModal(type) {
+  document.getElementById('modal-' + type).classList.add('open');
+}
+function closeModals() {
+  document.querySelectorAll('.modal-bg').forEach(m => m.classList.remove('open'));
+  document.getElementById('modal-code-reveal').style.display = 'none';
+  document.getElementById('modal-create-inner').style.display = '';
+}
+
+function createLeague() {
+  const name = document.getElementById('create-name').value.trim();
+  const league = document.getElementById('create-league').value.trim();
+  if (!name || !league) { alert('Please fill in both fields.'); return; }
+  state.playerName = name;
+  state.leagueName = league;
+  state.leagueCode = 'LCH-' + Math.floor(1000 + Math.random() * 9000);
+  document.getElementById('league-code-display').textContent = state.leagueCode;
+  document.getElementById('modal-create-inner').style.display = 'none';
+  document.getElementById('modal-code-reveal').style.display = '';
+}
+
+function joinLeague() {
+  const name = document.getElementById('join-name').value.trim();
+  const code = document.getElementById('join-code').value.trim().toUpperCase();
+  if (!name || !code) { alert('Please fill in both fields.'); return; }
+  state.playerName = name;
+  state.leagueCode = code;
+  state.leagueName = 'League ' + code;
+  closeModals();
+  enterGame();
+}
+
+function enterGame() {
+  closeModals();
+  document.getElementById('screen-home').classList.remove('active');
+  document.getElementById('screen-game').classList.add('active');
+  document.getElementById('league-chip').textContent = state.leagueCode;
+  initDraft();
+  initFakeScores();
+  renderLeaderboard();
+  startLiveFeed();
+}
+
+// ─── DRAFT ────────────────────────────────────────────────
+function initDraft() {
+  renderSlots();
+  renderStartupGrid(STARTUPS);
+}
+
+function renderSlots() {
+  const container = document.getElementById('draft-slots');
+  container.innerHTML = '';
+  for (let i = 0; i < 10; i++) {
+    const slot = document.createElement('div');
+    slot.className = 'slot' + (i < state.picks.length ? ' filled' : '');
+    if (i < state.picks.length) {
+      slot.innerHTML = '<span>' + state.picks[i].abbr + '</span>';
+    }
+    container.appendChild(slot);
+  }
+  document.getElementById('pick-count').textContent = state.picks.length;
+  const lockBtn = document.getElementById('lock-btn');
+  if (state.picks.length === 10) lockBtn.classList.add('ready');
+  else lockBtn.classList.remove('ready');
+}
+
+function renderStartupGrid(startups) {
+  const grid = document.getElementById('startup-grid');
+  grid.innerHTML = '';
+  startups.forEach(s => {
+    const isPicked = state.picks.find(p => p.id === s.id);
+    const isMaxed = state.picks.length >= 10 && !isPicked;
+    const card = document.createElement('div');
+    card.className = 'startup-card' + (isPicked ? ' selected' : '') + (isMaxed ? ' maxed' : '');
+    card.onclick = () => togglePick(s);
+    card.innerHTML = `
+      <div class="sc-top">
+        <div class="sc-icon" style="background:${s.color}">${s.abbr}</div>
+        <div class="sc-info">
+          <div class="sc-name">${s.name}</div>
+          <div class="sc-desc">${s.desc}</div>
+        </div>
+      </div>
+      <div class="sc-tags">
+        <span class="sc-tag sector">${s.sector}</span>
+        <span class="sc-tag">${s.stage}</span>
+      </div>
+      <div class="sc-potential">
+        <span class="sc-potential-label">Upside potential</span>
+        <span class="sc-potential-val">${s.potential}</span>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function togglePick(startup) {
+  if (state.locked) return;
+  const idx = state.picks.findIndex(p => p.id === startup.id);
+  if (idx > -1) {
+    state.picks.splice(idx, 1);
+    delete state.scores[startup.id];
+  } else {
+    if (state.picks.length >= 10) return;
+    state.picks.push(startup);
+    state.scores[startup.id] = Math.floor(40 + Math.random() * 120);
+  }
+  renderSlots();
+  const filtered = state.currentFilter === 'All' ? STARTUPS : STARTUPS.filter(s => s.sector === state.currentFilter);
+  renderStartupGrid(filtered);
+}
+
+function filterStartups(sector, btn) {
+  state.currentFilter = sector;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const filtered = sector === 'All' ? STARTUPS : STARTUPS.filter(s => s.sector === sector);
+  renderStartupGrid(filtered);
+}
+
+function lockDraft() {
+  if (state.picks.length < 10) return;
+  if (state.locked) return;
+  state.locked = true;
+  document.getElementById('lock-btn').textContent = '✓ Draft Locked';
+  document.getElementById('lock-btn').style.background = '#22C55E';
+  renderPortfolio();
+  switchTab('portfolio');
+}
+
+// ─── PORTFOLIO ────────────────────────────────────────────
+function renderPortfolio() {
+  if (state.picks.length === 0) {
+    document.getElementById('portfolio-empty').style.display = '';
+    document.getElementById('portfolio-filled').style.display = 'none';
+    return;
+  }
+  document.getElementById('portfolio-empty').style.display = 'none';
+  document.getElementById('portfolio-filled').style.display = '';
+
+  const list = document.getElementById('port-list');
+  list.innerHTML = '';
+  let total = 0;
+  let weekChange = 0;
+
+  state.picks.forEach(s => {
+    const pts = state.scores[s.id] || 0;
+    const chg = Math.floor(pts * 0.15 + Math.random() * 30);
+    total += pts;
+    weekChange += chg;
+    const row = document.createElement('div');
+    row.className = 'port-row';
+    row.id = 'port-row-' + s.id;
+    row.innerHTML = `
+      <div class="port-icon" style="background:${s.color}">${s.abbr}</div>
+      <div class="port-info">
+        <div class="port-name">${s.name}</div>
+        <div class="port-sector">${s.sector} · ${s.stage}</div>
+      </div>
+      <div class="port-pts">
+        <div class="port-pts-num" style="color:${s.color}" id="pts-${s.id}">${pts}</div>
+        <div class="port-pts-chg chg-up" id="chg-${s.id}">+${chg} this week</div>
+      </div>
+    `;
+    list.appendChild(row);
+  });
+
+  document.getElementById('total-score').textContent = total;
+  document.getElementById('total-change').textContent = '+' + weekChange + ' this week';
+  updateYourRank();
+}
+
+function updateYourRank() {
+  const myScore = Object.values(state.scores).reduce((a,b) => a+b, 0);
+  const allScores = [myScore, ...Object.values(state.fakeScores)].sort((a,b) => b-a);
+  const rank = allScores.indexOf(myScore) + 1;
+  const el = document.getElementById('your-rank');
+  if (el) el.textContent = '#' + rank;
+}
+
+// ─── LEADERBOARD ─────────────────────────────────────────
+function initFakeScores() {
+  FAKE_PLAYERS.forEach(p => {
+    state.fakeScores[p.name] = p.base + Math.floor(Math.random() * 200);
+  });
+}
+
+function renderLeaderboard() {
+  document.getElementById('lb-league-name').textContent = state.leagueName || state.leagueCode;
+  document.getElementById('lb-league-meta').textContent = state.playerName + ' and ' + FAKE_PLAYERS.length + ' others · Season 01';
+
+  const myScore = Object.values(state.scores).reduce((a,b) => a+b, 0);
+  const maxScore = Math.max(myScore, ...Object.values(state.fakeScores));
+
+  const players = [
+    {name: state.playerName || 'You', avatar: (state.playerName||'You').slice(0,2).toUpperCase(), color:'#7C3AED', score: myScore, isYou: true},
+    ...FAKE_PLAYERS.map(p => ({...p, score: state.fakeScores[p.name], isYou: false}))
+  ].sort((a,b) => b.score - a.score);
+
+  const container = document.getElementById('lb-rows');
+  container.innerHTML = '';
+
+  players.forEach((p, i) => {
+    const pct = maxScore > 0 ? Math.round((p.score / maxScore) * 100) : 0;
+    const weekChg = Math.floor(50 + Math.random() * 150) * (Math.random() > 0.25 ? 1 : -1);
+    const chgClass = weekChg >= 0 ? 'chg-up' : 'chg-dn';
+    const chgStr = (weekChg >= 0 ? '+' : '') + weekChg + ' this week';
+    const rankClass = i === 0 ? 'gold' : '';
+    const row = document.createElement('div');
+    row.className = 'lb-row' + (p.isYou ? ' you' : '');
+    row.innerHTML = `
+      <div class="lb-rank-num ${rankClass}">${i+1}</div>
+      <div class="lb-avatar" style="background:${p.color}">${p.avatar}</div>
+      <div class="lb-player-info">
+        <div class="lb-player-name">${p.name}${p.isYou ? ' <span style="font-size:11px;color:var(--p2);font-family:DM Sans">(you)</span>' : ''}</div>
+        <div class="lb-player-picks">${p.isYou ? (state.picks.slice(0,3).map(s=>s.name).join(' · ') || 'No picks yet') : 'Drafted 10 startups'}</div>
+      </div>
+      <div class="lb-right">
+        <div class="lb-score-num" style="color:${p.isYou ? 'var(--p2)' : 'var(--text)'}">${p.score}</div>
+        <div class="lb-score-chg ${chgClass}">${chgStr}</div>
+        <div class="lb-bar-wrap"><div class="lb-bar" style="width:${pct}%;background:${p.isYou ? 'var(--p2)' : 'var(--p)'}"></div></div>
+      </div>
+    `;
+    container.appendChild(row);
+  });
+}
+
+// ─── LIVE FEED ────────────────────────────────────────────
+let milestoneIndex = 0;
+function startLiveFeed() {
+  addFeedItem();
+  setInterval(() => {
+    addFeedItem();
+    tickScores();
+  }, 4000);
+}
+
+function addFeedItem() {
+  const m = MILESTONES[milestoneIndex % MILESTONES.length];
+  milestoneIndex++;
+  const timeAgo = ['just now','2 min ago','5 min ago','8 min ago'][Math.floor(Math.random()*4)];
+  const isPos = m.pts > 0;
+  const feedItem = {co: m.co, ev: m.event, pts: m.pts, time: timeAgo};
+  state.feed.unshift(feedItem);
+  if (state.feed.length > 8) state.feed.pop();
+
+  const myPick = state.picks.find(p => p.name === m.co);
+  if (myPick && state.locked) {
+    state.scores[myPick.id] = (state.scores[myPick.id] || 0) + m.pts;
+    updatePortfolioRow(myPick.id);
+    updateTotalScore();
+  }
+
+  FAKE_PLAYERS.forEach(p => {
+    const bump = Math.floor(Math.random() * 40) * (Math.random() > 0.3 ? 1 : -1);
+    state.fakeScores[p.name] = Math.max(0, state.fakeScores[p.name] + bump);
+  });
+
+  renderFeed();
+  renderLeaderboard();
+}
+
+function renderFeed() {
+  const list = document.getElementById('feed-list');
+  list.innerHTML = '';
+  state.feed.slice(0,6).forEach(f => {
+    const isPos = f.pts > 0;
+    const div = document.createElement('div');
+    div.className = 'feed-item';
+    div.innerHTML = `
+      <div class="feed-co">${f.co}</div>
+      <div class="feed-ev">${f.ev}</div>
+      <div class="feed-meta">
+        <span class="feed-pts-badge ${isPos ? 'pos' : 'neg'}">${isPos ? '+' : ''}${f.pts} pts</span>
+        <span class="feed-time">${f.time}</span>
+      </div>
+    `;
+    list.appendChild(div);
+  });
+}
+
+function tickScores() {
+  if (!state.locked) return;
+  state.picks.forEach(s => {
+    const bump = Math.floor(Math.random() * 8) * (Math.random() > 0.2 ? 1 : -1);
+    state.scores[s.id] = Math.max(0, (state.scores[s.id] || 0) + bump);
+    updatePortfolioRow(s.id);
+  });
+  updateTotalScore();
+  updateYourRank();
+}
+
+function updatePortfolioRow(id) {
+  const el = document.getElementById('pts-' + id);
+  if (el) el.textContent = state.scores[id] || 0;
+}
+
+function updateTotalScore() {
+  const total = Object.values(state.scores).reduce((a,b) => a+b, 0);
+  const el = document.getElementById('total-score');
+  if (el) el.textContent = total;
+}
+
+// ─── TAB SWITCHER ─────────────────────────────────────────
+function switchTab(tab) {
+  ['draft','portfolio','leaderboard'].forEach(t => {
+    document.getElementById('tab-' + t + '-content').style.display = t === tab ? '' : 'none';
+    document.getElementById('tab-' + t).classList.toggle('active', t === tab);
+  });
+  if (tab === 'portfolio') renderPortfolio();
+  if (tab === 'leaderboard') renderLeaderboard();
+}
+</script>
+</body>
+</html>
